@@ -41,8 +41,8 @@ Deployed on **Render** as a single web service — Express serves the React buil
 │  │         SERVER (Node.js + Express)                          │  │
 │  │  ┌────────────────┐  ┌────────────────┐  ┌──────────────┐  │  │
 │  │  │  RAG Pipeline  │  │ Vector Store   │  │ LLM Service  │  │  │
-│  │  │  (orchestrator)│  │ (Embeddings +  │  │ (Groq SDK)   │  │  │
-│  │  │                │  │  Similarity)   │  │              │  │  │
+│  │  │  (orchestrator)│  │ (Cosine Sim +  │  │(OpenRouter)  │  │  │
+│  │  │                │  │  Keyword Fall) │  │  Cloud API   │  │  │
 │  │  └────────┬───────┘  └────────┬───────┘  └──────┬───────┘  │  │
 │  │           │                   │                 │           │  │
 │  │           └──────────────────┬┴─────────────────┘           │  │
@@ -58,11 +58,11 @@ Deployed on **Render** as a single web service — Express serves the React buil
         ┌─────────────┘                  └────────────┐
         │                                             │
         ▼                                             ▼
-   ┌─────────────┐                          ┌────────────────┐
-   │ JSON KB DB  │                          │ Ollama Service │
-   │ (Entries +  │                          │ (Embeddings)   │
-   │ Documents)  │                          │ nomic-embed    │
-   └─────────────┘                          └────────────────┘
+   ┌─────────────┐                    ┌──────────────────────┐
+   │ JSON KB DB  │                    │ OpenRouter Cloud API │
+   │ (Entries +  │                    │ (Chat Completions)   │
+   │ Documents)  │                    │ google/gemma-4-31b   │
+   └─────────────┘                    └──────────────────────┘
         │
         └─ Customer-scoped Filtering
            (source_type + customer field)
@@ -75,11 +75,12 @@ Deployed on **Render** as a single web service — Express serves the React buil
 | Layer | Technology | Purpose |
 |-------|-----------|---------|
 | **Frontend** | React 18, Vite 5.4.21 | SPA with streaming UI |
-| **Backend** | Node.js, Express | REST + SSE endpoints |
-| **LLM** | Groq (llama-3.3-70b) | Primary inference; 8b-instant for classify/reformulate |
-| **Embeddings** | Ollama (nomic-embed-text) | 768-dim vector embeddings |
-| **Vector Search** | In-memory cosine similarity | Real-time semantic ranking |
+| **Backend** | Node.js, Express | REST + SSE endpoints (single service) |
+| **LLM** | OpenRouter (Google Gemma-4-31b:free) | Cloud-based inference, 24/7 availability |
+| **Embeddings** | Local fallback: keyword search | Vector embeddings when available; degrades to keyword matching |
+| **Vector Search** | Cosine similarity + keyword fallback | Real-time semantic ranking with graceful degradation |
 | **Storage** | JSON files + file-based cache | Knowledge base + conversation logs |
+| **Deployment** | Render (free tier) | Single Node.js web service, Oregon region |
 | **State** | localStorage (client), SSE (server-sent) | Conversation persistence |
 
 ---
@@ -102,7 +103,7 @@ Extract passages
 [Server] /api/documents/analyze
       │
       ├─ Store metadata
-      └─ Generate embeddings (Ollama)
+      └─ Generate embeddings (when available)
            │
            ▼
       Index in JSON KB
@@ -111,9 +112,10 @@ Extract passages
 
 **Key Details:**
 - Chunking: Sentence-aware sliding window with 150-token overlap
-- Embedding: Async batch via Ollama nomic-embed-text (768-dim)
+- Embedding: Async batch with fallback to keyword search (no external embeddings needed on Render)
 - Tagging: Every passage tagged with `customer` field (multi-tenant scope)
 - Deduplication: Source-file + chunk index prevents re-indexing
+- Vector Fallback: If embeddings unavailable, search pool uses keyword scoring instead of cosine similarity
 
 ---
 
@@ -131,15 +133,15 @@ User message: "In ASM, how do I fix JATS validation?"
       │  └─ SOCIAL vs TASK (reject off-topic)
       │
       ├─ isDomainRelated() 
-      │  └─ Groq classify: is this e-publishing? (fail-open when LLM down)
+      │  └─ OpenRouter classify: is this e-publishing? (fail-open when LLM down)
       │
       ├─ Dual-query search
       │  ├─ Raw: "JATS validation" 
-      │  └─ Reformulated: Groq 8b expands intent
+      │  └─ Reformulated: OpenRouter expands intent
       │
       ├─ searchSimilar(query, topK=5, customerFilter="ASM")
       │  └─ Filter: source_type=document AND customer=ASM
-      │     Rank by cosine similarity + helpfulness boost
+      │     Rank by cosine similarity (or keyword match if vectors unavailable)
       │
       ├─ Score gating
       │  ├─ If customer-scoped: gate=0.62
@@ -149,14 +151,14 @@ User message: "In ASM, how do I fix JATS validation?"
       │  └─ getDocumentPassages(source, customer="ASM")
       │     Expand to surrounding passages
       │
-      ├─ Synthesis (Groq 70b streaming)
+      ├─ Synthesis (OpenRouter streaming, google/gemma-4-31b)
       │  ├─ SYSTEM_PROMPT: e-publishing expert, support tone
       │  ├─ DOC_SYNTHESIS_PROMPT: ground in passages
       │  └─ Fallback injection: "if docs don't answer → say not in ASM docs → route to support"
       │
       └─ [safeStream] wrapper
-         ├─ If Groq available: stream response
-         └─ If Groq 429/down: yield SERVICE_BUSY_RESPONSE (no hallucination)
+         ├─ If OpenRouter available: stream response
+         └─ If OpenRouter 429/down: yield SERVICE_BUSY_RESPONSE (no hallucination)
 
 Response streamed via SSE → Client UI
 ```
@@ -239,29 +241,36 @@ searchSimilar(query, customerFilter="ASM")
 ```javascript
 // buildEmbedText(entry)
 return [title, aliases, error_description, solution].join('\n')
-  ↓ (Ollama nomic-embed-text)
+  ↓ (local embeddings when available)
 [768-dimensional dense vector]
   ↓
 Stored in KB[i].embedding
+// Fallback: if embeddings unavailable, score by keyword overlap
 ```
 
-### Search: Cosine Similarity + Ranking
+### Search: Cosine Similarity with Keyword Fallback
 ```javascript
+// If vectors available:
 cosineSimilarity(queryVec, docVec) = 
   dot(q, d) / (norm(q) * norm(d))
 
-score = base_similarity * (1 + min(helpfulness, 15) * 0.02)
+// If vectors unavailable (e.g., Render environment):
+keywordScore(query, text) = 
+  overlap(query_words, text_words) / max(len(query), len(text))
+
+score = base_score * (1 + min(helpfulness, 15) * 0.02)
   // Boost entries with user thumbs-up
 ```
 
 ### Filtering Pipeline
 ```
-pool = KB entries
-  ├─ Remove entries without embeddings
+pool = KB entries (includes all entries with or without embeddings)
   ├─ Filter by category (if categoryFilter set)
   ├─ Filter by customer (if customerFilter set)
   │  └─ source_type=document AND customer=customerFilter
-  └─ Rank by cosine similarity
+  └─ Rank by available method:
+      ├─ If embeddings exist: cosine similarity
+      └─ Otherwise: keyword overlap scoring
       └─ Return topK (default 5) where score > 0.25
 ```
 
@@ -269,21 +278,23 @@ pool = KB entries
 
 ## 🛡️ LLM Resilience & Fallback Strategy
 
-### Groq Service (Primary)
+### OpenRouter Service (Primary, Cloud-Based)
+- **Provider:** OpenRouter (cloud LLM gateway)
 - **Models:**
-  - Fast: `llama-3.1-8b-instant` (classify, reformulate)
-  - Smart: `llama-3.3-70b-versatile` (synthesis, reasoning)
+  - Fast: `google/gemma-4-31b-it:free` (classify, reformulate)
+  - Smart: `google/gemma-4-31b-it:free` (synthesis, reasoning)
+- **Availability:** Works 24/7 without local machine (unlike Ollama)
 - **Failure Handling:**
-  - `groqOnce()` returns `""` on error (internal callers degrade gracefully)
-  - `groqStream()` throws on error (pipeline catches via safeStream)
+  - `openrouterOnce()` returns `""` on error (internal callers degrade gracefully)
+  - `openrouterStream()` throws on error (pipeline catches via safeStream)
 
 ### Safe Fallback Strategy
 ```javascript
 safeStream(systemPrompt, userMessage, history) {
   try {
-    return groqStream(...)
+    return openrouterStream(...)
   } catch (err) {
-    if (err.code === 'rate_limit_exceeded') {
+    if (err.code === 'rate_limit_exceeded' || err.status >= 500) {
       // Don't fallback to weak local model
       // Risk of hallucination > value of weak answer
       yield SERVICE_BUSY_RESPONSE
@@ -297,15 +308,15 @@ SERVICE_BUSY_RESPONSE =
 ```
 
 **Rationale:** 
-- Weak local model (Ollama llama3.2:3b) hallucinated MOBI/XML instructions when Groq was rate-limited
+- Weak local model would hallucinate when cloud LLM unavailable
 - User feedback: "Safe message + support" > "risky local answer"
 - Result: No hallucination fallback; fail gracefully instead
 
 ### Domain Gating (Fail-Open)
 ```javascript
 isDomainRelated(text) {
-  const relevant = groqOnce(DOMAIN_PROMPT, text)
-  // If Groq fails (returns ''), assume relevant (fail-open)
+  const relevant = openrouterOnce(DOMAIN_PROMPT, text)
+  // If OpenRouter fails (returns ''), assume relevant (fail-open)
   return relevant !== 'no'
 }
 ```
@@ -379,9 +390,10 @@ claude-support-bot/
 │   │   │   └── conversations.js     # Chat history
 │   │   └── services/
 │   │       ├── ragPipeline.js       # Core orchestrator
-│   │       ├── vectorStore.js       # Search + filtering
-│   │       ├── groqService.js       # Groq SDK wrapper
-│   │       ├── ollamaService.js     # Embeddings
+│   │       ├── vectorStore.js       # Search + keyword fallback
+│   │       ├── openrouterService.js # OpenRouter cloud LLM
+│   │       ├── groqService.js       # Groq SDK wrapper (optional)
+│   │       ├── ollamaService.js     # Ollama embeddings (optional)
 │   │       ├── documentChunker.js   # PDF/DOCX → passages
 │   │       └── conversationStore.js # Persistence
 │   ├── data/
@@ -400,40 +412,72 @@ claude-support-bot/
 
 ### Environment Variables
 ```bash
-# LLM provider — OpenRouter (deployed default: free cloud models, works 24/7)
-OPENROUTER_API_KEY=sk-or-v1-...
-OPENROUTER_FAST_MODEL=meta-llama/llama-3.1-8b-instruct:free
-OPENROUTER_SMART_MODEL=meta-llama/llama-3.3-70b-instruct:free
+# LLM Provider — OpenRouter (default, cloud-based, works 24/7)
+OPENROUTER_API_KEY=sk-or-v1-...           # Required for production
+OPENROUTER_BASE_URL=https://openrouter.ai/api/v1  # Optional, defaults shown
+OPENROUTER_FAST_MODEL=google/gemma-4-31b-it:free  # Fast classify/reformulate
+OPENROUTER_SMART_MODEL=google/gemma-4-31b-it:free # Smart synthesis/reasoning
 
 # Alternative providers — swap the import in server/src/services/ragPipeline.js:
-#   Groq:   GROQ_API_KEY=gsk_...
-#   Ollama: OLLAMA_BASE_URL=http://localhost:11434   OLLAMA_LLM_MODEL=llama3.2:1b
+#   Groq:   import './groqService'
+#           GROQ_API_KEY=gsk_...
+#   Ollama: import './ollamaLlmService'
+#           OLLAMA_BASE_URL=http://localhost:11434
+#           OLLAMA_LLM_MODEL=llama3.2:1b
+
+# Vector Embeddings (optional, falls back to keyword search if unavailable)
+OLLAMA_BASE_URL=http://localhost:11434   # Optional local embeddings
+OLLAMA_EMBED_MODEL=nomic-embed-text      # Default embedding model
 
 # Server
-PORT=3001                 # Render sets this automatically
-CLIENT_URL=http://localhost:5173
-ADMIN_PASSWORD=admin       # admin dashboard login
-JWT_SECRET=<random>        # signs user auth tokens (Render: auto-generated)
+PORT=3001                    # Render sets this automatically
+NODE_VERSION=20              # Render Node.js version
+CLIENT_URL=https://publisher-ai-chatbot-jdhm.onrender.com  # Client URL for attribution
+ADMIN_PASSWORD=admin         # Admin dashboard login password
+JWT_SECRET=<random>          # Signing key for auth tokens (Render: auto-generated)
 ```
 
 ### Local Development
+
+**Option A: Cloud LLM (recommended for development without local GPU)**
 ```bash
-# Terminal 1: Start Ollama
+# Set OpenRouter API key
+export OPENROUTER_API_KEY=sk-or-v1-...
+
+# Terminal 1: Backend
+cd server && npm install && npm start
+
+# Terminal 2: Frontend
+cd client && npm install && npm run dev
+# Client available at http://localhost:5173
+```
+
+**Option B: Local LLM + Embeddings**
+```bash
+# Terminal 1: Start Ollama (embeddings only, LLM still uses OpenRouter)
 ollama run nomic-embed-text
 
 # Terminal 2: Backend
+export OPENROUTER_API_KEY=sk-or-v1-...
 cd server && npm install && npm start
 
 # Terminal 3: Frontend
 cd client && npm install && npm run dev
 ```
 
+**Note:** 
+- OpenRouter is free tier with rate limits; consider setting `OPENROUTER_FAST_MODEL` and `OPENROUTER_SMART_MODEL` to test different models
+- Without Ollama, vector search gracefully degrades to keyword matching
+- Ollama is optional; KB search works fine with keyword fallback alone
+
 ### Production Considerations
 - **Scaling:** Move JSON KB to PostgreSQL with pgvector for large corpora
-- **Embeddings:** Host Ollama on dedicated GPU VM for speed
-- **Groq rate limits:** Implement token budgeting; alert when approaching daily cap
-- **Monitoring:** Track LLM latency, hallucination rate, customer satisfaction
-- **Fallback LLM:** Evaluate DeepSeek / Claude API as secondary provider
+- **Embeddings:** Optional — add Ollama on dedicated GPU VM for better semantic search vs keyword fallback
+- **OpenRouter Cost:** Monitor free tier usage; may hit rate limits with high traffic (consider paid tier)
+- **Vector Search:** Current keyword-fallback works well for <1000 entries; add embeddings for >10k entries
+- **Monitoring:** Track LLM latency, fallback frequency (when SERVICE_BUSY_RESPONSE used), hallucination rate
+- **Fallback LLM:** Consider Claude API (via claude-3.5-sonnet) or DeepSeek as paid backup
+- **24/7 Availability:** Current architecture (Render + OpenRouter) needs no local machine; works while laptop off
 
 ---
 
@@ -456,12 +500,13 @@ cd client && npm install && npm run dev
 
 | Metric | Value | Notes |
 |--------|-------|-------|
-| **Embeddings Latency** | ~200ms | nomic-embed-text (CPU) |
-| **Search Latency** | ~50ms | In-memory cosine similarity |
-| **Groq Inference** | 3–8s | 70b-versatile; varies by response length |
-| **SSE Streaming** | <1s first token | Real-time token delivery |
-| **Daily Token Limit** | 100k | Groq free tier; cumulative 8b + 70b |
-| **KB Size** | Tested to 500+ passages | JSON file; recommend DB at >10k |
+| **Embeddings Latency** | N/A (keyword fallback) | Falls back to keyword search; no external embeddings on Render |
+| **Search Latency** | ~50ms | In-memory cosine similarity or keyword matching |
+| **OpenRouter Inference** | 4–8s | google/gemma-4-31b:free; varies by response length |
+| **First Token** | ~1–2s | OpenRouter cold start, then streaming |
+| **SSE Streaming** | <100ms per token | Real-time token delivery after first token |
+| **Rate Limits** | Free tier variable | OpenRouter free models subject to availability |
+| **KB Size** | Tested to 500+ passages | JSON file; recommend PostgreSQL at >10k |
 
 ---
 
@@ -475,5 +520,6 @@ Internal project. For modifications:
 
 ---
 
-**Last Updated:** June 2026  
+**Last Updated:** 2026-06-14  
+**Status:** ✅ Live on Render + OpenRouter (24/7 cloud deployment)  
 **Project:** DocFlow — Publishing AI Support Bot
