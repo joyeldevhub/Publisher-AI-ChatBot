@@ -1,0 +1,202 @@
+[
+  {
+    "id": "d5418c98-1b46-4dab-987b-019881494cea",
+    "timestamp": "2026-06-13T18:15:26.663Z",
+    "query": "Hi",
+    "type": "conversational",
+    "kbHits": 0,
+    "webSearch": false,
+    "responseMs": 2216,
+    "sources": []
+  },
+  {
+    "id": "0da0df94-9906-49aa-b052-ca089bcdab7d",
+    "timestamp": "2026-06-13T18:10:37.844Z",
+    "query": "hi",
+    "type": "conversational",
+    "kbHits": 0,
+    "webSearch": false,
+    "responseMs": 1574,
+    "sources": []
+  },
+  {
+    "id": "7d2d7529-efcd-4ca9-b81a-1dd339d93389",
+    "timestamp": "2026-06-13T18:04:02.747Z",
+    "query": "How are you?",
+    "type": "conversational",
+    "kbHits": 0,
+    "webSearch": false,
+    "responseMs": 3286,
+    "sources": []
+  },
+  {
+    "id": "b8eb1dee-82f7-4135-b9ac-86cf8ad03efe",
+    "timestamp": "2026-06-13T18:03:52.465Z",
+    "query": "hi",
+    "type": "conversational",
+    "kbHits": 0,
+    "webSearch": false,
+    "responseMs": 2262,
+    "sources": []
+  },
+  {
+    "id": "7b5f7894-2494-44e4-a9b4-0c8956f286d6",
+    "timestamp": "2026-06-13T18:03:22.340Z",
+    "query": "Define DTD error.",
+    "type": "common_solution",
+    "kbHits": 0,
+    "webSearch": false,
+    "responseMs": 13023,
+    "sources": []
+  },
+  {
+    "id": "c3d2c8e6-8d95-4dfd-aad6-b70409202a3a",
+    "timestamp": "2026-06-13T17:38:19.594Z",
+    "query": "Hi",
+    "type": "conversational",
+    "kbHits": 0,
+    "webSearch": false,
+    "responseMs": 1755,
+    "sources": []
+  },
+  {
+    "id": "870abd87-3385-47aa-a826-4064483404d2",
+    "timestamp": "2026-06-13T17:29:50.429Z",
+    "query": "hi",
+    "type": "conversational",
+    "kbHits": 0,
+    "webSearch": false,
+    "responseMs": 2156,
+    "sources": []
+  },
+  {
+    "id": "dd9ec3c9-1e5a-468d-bbe7-5f2ff8a2d05f",
+    "timestamp": "2026-06-13T17:27:37.032Z",
+    "query": "hi",
+    "type": "conversational",
+    "kbHits": 0,
+    "webSearch": false,
+    "responseMs": 1380,
+    "sources": []
+  },
+  {
+    "id": "709a7c67-f758-4b7d-95df-daf0e4f3937d",
+    "timestamp": "2026-06-13T17:02:28.151Z",
+    "query": "What is Meta Data?",
+    "type": "common_solution",
+    "kbHits": 0,
+    "webSearch": false,
+    "responseMs": 24263,
+    "sources": []
+  },
+  {
+    "id": "5352ef6b-51e2-42af-a239-0a919b1b5db6",
+    "timestamp": "2026-06-13T17:01:13.189Z",
+    "query": "Good Evening!",
+    "type": "conversational",
+    "kbHits": 0,
+    "webSearch": false,
+    "responseMs": 3676,
+    "sources": []
+  },
+  {
+    "id": "145cd3c8-7af6-473d-b165-602641915e8b",
+    "timestamp": "2026-06-13T17:00:09.573Z",
+    "query": "what is book?",
+    "type": "out_of_scope",
+    "kbHits": 0,
+    "webSearch": false,
+    "responseMs": 6571,
+    "sources": []
+  },
+  {
+    "id": "1be05067-659e-4211-958c-0ae69f78bca9",
+    "timestamp": "2026-06-13T16:58:12.228Z",
+    "query": "ahaan",
+    "type": "conversational",
+    "kbHits": 0,
+    "webSearch": false,
+    "responseMs": 9631,
+    "sources": []
+  },
+  {
+    "id": "efad0f04-17ed-4c31-97bd-3857cced8619",
+    "timestamp": "2026-06-13T16:57:13.776Z",
+    "query": "okay",
+    "type": "conversational",
+    "kbHits": 0,
+    "webSearch": false,
+    "responseMs": 3736,
+    "sources": []
+  },
+  {
+    "id": "49b1c13d-ec26-4235-b178-f1c839580cd3",
+    "timestamp": "2026-06-13T16:57:06.959Z",
+    "query": "hello",
+    "type": "conversational",
+    "kbHits": 0,
+    "webSearch": false,
+    "responseMs": 1846,
+    "sources": []
+  },
+  {
+    "id": "6b7031f7-720f-4183-81ae-eb52e0222d33",
+    "timestamp": "2026-06-13T16:56:02.403Z",
+    "query": "okay",
+    "type": "conversational",
+    "kbHits": 0,
+    "webSearch": false,
+    "responseMs": 3724,
+    "sources": []
+  },
+  {
+    "id": "9d33213b-cb9a-466d-97ac-ec4ed91d1179",
+    "timestamp": "2026-06-13T16:55:48.677Z",
+    "query": "thank you",
+    "type": "conversational",
+    "kbHits": 0,
+    "webSearch": false,
+    "responseMs": 4028,
+    "sources": []
+  },
+  {
+    "id": "0c86294f-d1f1-47fe-9858-917e0ee5095b",
+    "timestamp": "2026-06-13T16:54:23.676Z",
+    "query": "hello",
+    "type": "conversational",
+    "kbHits": 0,
+    "webSearch": false,
+    "responseMs": 3493,
+    "sources": []
+  },
+  {
+    "id": "3f50ef76-7f68-4fa7-8ec2-aeb3aedb7c3f",
+    "timestamp": "2026-06-13T16:54:09.669Z",
+    "query": "hi",
+    "type": "conversational",
+    "kbHits": 0,
+    "webSearch": false,
+    "responseMs": 3633,
+    "sources": []
+  },
+  {
+    "id": "97de9a71-a1a9-42c2-81e9-78c288e4e752",
+    "timestamp": "2026-06-13T16:47:55.668Z",
+    "query": "What are the publishing industries are top?",
+    "type": "common_solution",
+    "kbHits": 0,
+    "webSearch": false,
+    "responseMs": 67029,
+    "sources": []
+  },
+  {
+    "id": "d624a046-b738-4489-813a-41c3a8de0d52",
+    "timestamp": "2026-06-13T16:38:28.648Z",
+    "query": "Hi",
+    "type": "conversational",
+    "kbHits": 0,
+    "webSearch": false,
+    "responseMs": 16709,
+    "sources": []
+  }
+]
