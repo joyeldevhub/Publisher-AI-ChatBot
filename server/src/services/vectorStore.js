@@ -20,18 +20,50 @@ function buildEmbedText(entry) {
     .join('\n');
 }
 
+// Embed text but never throw — when no embedding service is reachable (e.g. hosted
+// without a local Ollama), store the entry without a vector. It stays searchable via
+// the keyword fallback in searchSimilar().
+async function safeEmbed(text) {
+  try {
+    return await getEmbedding(text);
+  } catch (err) {
+    console.warn('[vectorStore] embedding unavailable — storing entry without a vector:', err.message);
+    return [];
+  }
+}
+
+const KW_STOP = new Set([
+  'the','is','a','an','of','to','in','for','and','or','my','i','how','do','does',
+  'what','why','with','on','it','this','that','help','me','understand','about',
+  'can','you','please','need','want','get','got','am','are','was','were','will',
+]);
+
+// Fraction of the query's distinct meaningful words that appear in the entry's text.
+// Used when vector embeddings aren't available so the KB still works. Returns 0..1,
+// the same range cosine similarity produces, so the pipeline's score gates carry over.
+function keywordScore(query, row) {
+  const terms = [...new Set(
+    String(query || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/)
+      .filter((w) => w.length > 2 && !KW_STOP.has(w))
+  )];
+  if (terms.length === 0) return 0;
+  const hay = `${row.title || ''} ${row.aliases || ''} ${row.error_description || ''} ${row.solution || ''}`.toLowerCase();
+  let hits = 0;
+  for (const t of terms) if (hay.includes(t)) hits++;
+  return hits / terms.length;
+}
+
 async function addEntry(entry) {
   const db = readDB();
   const textToEmbed = buildEmbedText(entry);
-  const embedding = await getEmbedding(textToEmbed);
+  const embedding = await safeEmbed(textToEmbed);
   db.push({ ...entry, embedding, created_at: new Date().toISOString() });
   writeDB(db);
 }
 
 async function searchSimilar(query, topK = 5, categoryFilter = null, customerFilter = null) {
   const db = readDB();
-  let pool = db.filter((r) => r.embedding && r.embedding.length > 0);
-  if (pool.length === 0) return [];
+  let pool = db;
 
   // Category filter — only search within specified category
   if (categoryFilter) {
@@ -48,10 +80,26 @@ async function searchSimilar(query, topK = 5, categoryFilter = null, customerFil
     pool = pool.filter((r) => r.source_type === 'document' && (r.customer || '').toLowerCase() === cf);
   }
 
-  const queryEmbedding = await getEmbedding(query);
+  if (pool.length === 0) return [];
+
+  // Prefer semantic (vector) search, but it needs an embedding service. When no entry
+  // has a stored vector — or the embedding service is unreachable — fall back to a
+  // keyword-overlap score so the KB still works (the LLM relevance gate keeps precision).
+  const haveVectors = pool.some((r) => r.embedding && r.embedding.length > 0);
+  let queryEmbedding = null;
+  if (haveVectors) {
+    try {
+      queryEmbedding = await getEmbedding(query);
+    } catch (err) {
+      console.warn('[vectorStore] embedding unavailable — using keyword search:', err.message);
+    }
+  }
 
   const scored = pool.map((row) => {
-    const base = cosineSimilarity(queryEmbedding, row.embedding);
+    const useVector = queryEmbedding && row.embedding && row.embedding.length > 0;
+    const base = useVector
+      ? cosineSimilarity(queryEmbedding, row.embedding)
+      : keywordScore(query, row);
     const boost = 1 + Math.min(row.helpfulness || 0, 15) * 0.02;
     return { ...row, score: base * boost };
   });
@@ -109,7 +157,7 @@ async function updateEntry(id, fields) {
   const updated = { ...db[index], ...fields, updated_at: new Date().toISOString() };
   // Re-embed since content changed
   const textToEmbed = buildEmbedText(updated);
-  updated.embedding = await getEmbedding(textToEmbed);
+  updated.embedding = await safeEmbed(textToEmbed);
   db[index] = updated;
   writeDB(db);
   return true;
