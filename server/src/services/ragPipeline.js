@@ -1,5 +1,5 @@
 const { searchSimilar, getDocumentPassages } = require('./vectorStore');
-const { groqOnce, groqStream } = require('./ollamaLlmService'); // Using Ollama via OLLAMA_BASE_URL (ngrok tunnel to local Ollama)
+const { groqOnce, groqStream } = require('./openrouterService'); // Using OpenRouter cloud API (free models, works 24/7 without a local machine)
 const { searchWeb } = require('./webSearch'); // Web search enabled
 const { logRequest } = require('./logger');
 

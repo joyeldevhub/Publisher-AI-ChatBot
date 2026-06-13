@@ -4,6 +4,24 @@ Enterprise-grade **Retrieval-Augmented Generation (RAG)** system for contextual 
 
 ---
 
+## 🚀 Live Demo
+
+**Live app:** https://publisher-ai-chatbot-jdhm.onrender.com
+
+Deployed on **Render** as a single web service — Express serves the React build **and** the API. The chatbot LLM runs on **OpenRouter** (free cloud models), so the demo stays available 24/7 without any local machine.
+
+**Demo logins:**
+
+| Role | Login | Password |
+|------|-------|----------|
+| User (chat) | `publisher@gmail.com` | `User123` |
+| Admin (KB dashboard) | admin login | `admin` |
+
+> ⚠️ These are demo credentials in a public repo — change them for any real deployment.
+> ℹ️ The free Render instance sleeps after ~15 min idle, so the first request may take ~30–60s to wake.
+
+---
+
 ## 🏗️ Architecture Overview
 
 ```
@@ -382,19 +400,20 @@ claude-support-bot/
 
 ### Environment Variables
 ```bash
-# Groq
-GROQ_API_KEY=gsk_...
-GROQ_FAST_MODEL=llama-3.1-8b-instant
-GROQ_SMART_MODEL=llama-3.3-70b-versatile
+# LLM provider — OpenRouter (deployed default: free cloud models, works 24/7)
+OPENROUTER_API_KEY=sk-or-v1-...
+OPENROUTER_FAST_MODEL=meta-llama/llama-3.1-8b-instruct:free
+OPENROUTER_SMART_MODEL=meta-llama/llama-3.3-70b-instruct:free
 
-# Ollama (local embeddings)
-OLLAMA_HOST=http://localhost:11434
-OLLAMA_MODEL=nomic-embed-text
+# Alternative providers — swap the import in server/src/services/ragPipeline.js:
+#   Groq:   GROQ_API_KEY=gsk_...
+#   Ollama: OLLAMA_BASE_URL=http://localhost:11434   OLLAMA_LLM_MODEL=llama3.2:1b
 
 # Server
-PORT=3001
+PORT=3001                 # Render sets this automatically
 CLIENT_URL=http://localhost:5173
-ADMIN_PASSWORD=admin123
+ADMIN_PASSWORD=admin       # admin dashboard login
+JWT_SECRET=<random>        # signs user auth tokens (Render: auto-generated)
 ```
 
 ### Local Development
