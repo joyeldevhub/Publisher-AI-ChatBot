@@ -1,1 +1,12 @@
 node_modules
+
+# Secrets / local env
+.env
+.env.*
+*.local
+
+# Runtime uploads (ephemeral on Render)
+server/uploads/
+
+# Stray nested clone
+/Publisher-AI-ChatBot/

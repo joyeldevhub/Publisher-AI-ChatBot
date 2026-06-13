@@ -1,0 +1,38 @@
+# Render Blueprint for Publisher-AI-ChatBot
+# Single Web Service: Express API + serves the built React client.
+# Docs: https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: publisher-ai-chatbot
+    runtime: node
+    plan: free
+    region: oregon
+    # --include=dev forces Vite (a devDependency) to install even though
+    # Render sets NODE_ENV=production during the build.
+    buildCommand: npm install --prefix client --include=dev && npm run build --prefix client && npm install --prefix server
+    startCommand: node server/src/index.js
+    healthCheckPath: /api/ping
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      # Auto-generated random secret for signing JWTs
+      - key: JWT_SECRET
+        generateValue: true
+      # ── Fill these in the Render dashboard (sync:false = prompt on deploy) ──
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      # Backend verifies Google sign-in tokens against this client id
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      # Frontend Google client id — must be present at BUILD time (Vite inlines it)
+      - key: VITE_GOOGLE_CLIENT_ID
+        sync: false
+      # Optional: outbound email (nodemailer)
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false

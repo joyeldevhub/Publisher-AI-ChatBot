@@ -47,6 +47,17 @@ app.use('/api/health', healthCheckRoutes);
 
 app.get('/api/ping', (req, res) => res.json({ status: 'ok' }));
 
+// ── Serve the built React client (production / single-service deploy) ────────
+const clientDist = path.join(__dirname, '../../client/dist');
+if (fs.existsSync(clientDist)) {
+  app.use(express.static(clientDist));
+  // SPA fallback: hand any non-API route to index.html so client-side routing works
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) return next();
+    res.sendFile(path.join(clientDist, 'index.html'));
+  });
+}
+
 app.listen(PORT, () => {
   console.log(`\n  Support Bot server running → http://localhost:${PORT}\n`);
 });
