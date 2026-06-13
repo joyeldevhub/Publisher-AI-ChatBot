@@ -1,248 +1,334 @@
-# 📚 DocFlow — Publishing Support AI Assistant
+# DocFlow — RAG-Powered AI Support Bot for Publishing
 
-## 1️⃣ Why This AI Assistant Bot?
-
-**DocFlow** is an intelligent AI assistant bot specifically designed for **publishing industry support**. It helps users with:
-
-- **LaTeX Setter Formatting Guidelines** — answers questions about LaTeX proof generation, formatting issues, and troubleshooting
-- **Equation & Table Problems** — solves complex formatting issues in academic publishing
-- **Multi-User Support** — works like ChatGPT with separate login, conversation history for each user
-- **Knowledge Base Search** — semantic search across 320+ publishing support articles
-- **Document Analysis** — imports and analyzes publishing documents
+Enterprise-grade **Retrieval-Augmented Generation (RAG)** system for contextual customer support across document repositories and curated knowledge bases, with customer-scoped semantic search, confidence gating, and graceful LLM resilience. Built for the publishing industry.
 
 ---
 
-## 2️⃣ How to Use DocFlow
+## 🏗️ Architecture Overview
 
-### For End Users
-1. Login/Signup with email or Google
-2. Start chatting - ask questions about publishing/LaTeX issues
-3. Attach files (PDFs, images) for analysis
-4. View all conversations in sidebar
-5. Export conversations as Markdown/PDF
-
-### For Admins
-1. Login with admin credentials
-2. Manage knowledge base articles
-3. Bulk import documents
-4. View analytics and user feedback
-
----
-
-## 3️⃣ What's Included?
-
-✨ **Core Features:**
-- Multi-User Authentication (Email + Google OAuth)
-- ChatGPT-style conversations with history
-- Semantic search (320+ articles)
-- File upload (PDF, images, docs)
-- Export to Markdown/PDF
-- Dark/Light mode
-- Voice-to-text support
-- Admin panel for KB management
-- Real-time AI responses with streaming
-
----
-
-## 4️⃣ Technology Stack
-
-### Frontend
-- React, Vite, TailwindCSS, Lucide Icons
-- React Router, Axios, Google OAuth
-
-### Backend
-- Node.js, Express, Nodemon
-- UUID, Bcryptjs, JWT authentication
-
-### AI & Search
-- **Groq API** — Fast LLM (primary chat)
-- **Ollama** — Local embeddings for semantic search
-- Fallbacks: Claude, DeepSeek, OpenAI
-
-### Data Storage
-- JSON files (users, conversations, knowledge base)
-- In-memory caching for speed
-- Vector store for embeddings
-
----
-
-## 5️⃣ AI Models Used
-
-### Primary LLM: Groq
-- Model: mixtral-8x7b-32768
-- Speed: 500+ tokens/sec
-- Perfect for real-time chat
-- Low cost, high quality
-
-### Embeddings: Ollama (Local)
-- Model: nomic-embed-text
-- Runs offline, no API costs
-- 768-dimensional vectors
-- Fast semantic search
-
-### Authentication: Google OAuth 2.0
-- Server-side verification
-- Auto-user creation
-- 30-day JWT tokens
-
----
-
-## 6️⃣ How to Set Up & Run
-
-### Requirements
-- Node.js v18+
-- npm v9+
-- Ollama with embeddings model
-- Git
-
-### Quick Setup
-
-```bash
-# 1. Clone repository
-git clone https://github.com/yourusername/claude-support-bot.git
-cd claude-support-bot
-
-# 2. Install dependencies
-npm install
-cd server && npm install && cd ..
-cd client && npm install && cd ..
-
-# 3. Create .env file with your API keys
-# GROQ_API_KEY=your-key
-# GOOGLE_CLIENT_ID=your-id (optional)
-# JWT_SECRET=your-secret
-
-# 4. Start Ollama (another terminal)
-ollama serve
-ollama pull nomic-embed-text
-
-# 5. Start dev servers
-npm run dev
-
-# 6. Open browser
-# http://localhost:5173
-
-# 7. Login with test user
-# Email: publisher@gmail.com
-# Password: User123
 ```
-
-### Environment Variables (.env)
-
-```env
-# Server
-PORT=3001
-CLIENT_URL=http://localhost:5173
-ADMIN_PASSWORD=admin123
-JWT_SECRET=change-this-to-random-string
-
-# Groq API (required)
-GROQ_API_KEY=your-groq-api-key
-
-# Ollama (required for embeddings)
-OLLAMA_BASE_URL=http://localhost:11434
-OLLAMA_EMBED_MODEL=nomic-embed-text
-OLLAMA_LLM_MODEL=llama3.2:3b
-
-# Google OAuth (optional)
-GOOGLE_CLIENT_ID=your-google-client-id
-
-# Alternatives (optional)
-DEEPSEEK_API_KEY=your-key
-ANTHROPIC_API_KEY=your-key
+┌─────────────────────────────────────────────────────────────────────┐
+│                         CLIENT (React 18 + Vite)                    │
+│  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐  │
+│  │  Chat Interface  │  │  Admin Dashboard │  │   Doc Manager    │  │
+│  │  (Streaming SSE) │  │  (KB Management) │  │  (Import/Manage) │  │
+│  └────────┬─────────┘  └────────┬─────────┘  └────────┬─────────┘  │
+│           │                     │                     │             │
+└───────────┼─────────────────────┼─────────────────────┼─────────────┘
+            │ HTTP/SSE            │ REST API            │ REST API
+            │                     │                     │
+┌───────────┼─────────────────────┼─────────────────────┼─────────────┐
+│           ▼                     ▼                     ▼             │
+│  ┌──────────────────────────────────────────────────────────────┐  │
+│  │         SERVER (Node.js + Express)                          │  │
+│  │  ┌────────────────┐  ┌────────────────┐  ┌──────────────┐  │  │
+│  │  │  RAG Pipeline  │  │ Vector Store   │  │ LLM Service  │  │  │
+│  │  │  (orchestrator)│  │ (Embeddings +  │  │ (Groq SDK)   │  │  │
+│  │  │                │  │  Similarity)   │  │              │  │  │
+│  │  └────────┬───────┘  └────────┬───────┘  └──────┬───────┘  │  │
+│  │           │                   │                 │           │  │
+│  │           └──────────────────┬┴─────────────────┘           │  │
+│  │                              ▼                             │  │
+│  │                    ┌──────────────────┐                    │  │
+│  │                    │ Intent Classifier│                    │  │
+│  │                    │ (Domain Gating)  │                    │  │
+│  │                    └──────────────────┘                    │  │
+│  │                                                             │  │
+│  └──────────────────┬──────────────────┬──────────────────────┘  │
+└─────────────────────┼──────────────────┼──────────────────────────┘
+                      │                  │
+        ┌─────────────┘                  └────────────┐
+        │                                             │
+        ▼                                             ▼
+   ┌─────────────┐                          ┌────────────────┐
+   │ JSON KB DB  │                          │ Ollama Service │
+   │ (Entries +  │                          │ (Embeddings)   │
+   │ Documents)  │                          │ nomic-embed    │
+   └─────────────┘                          └────────────────┘
+        │
+        └─ Customer-scoped Filtering
+           (source_type + customer field)
 ```
 
 ---
 
-## 7️⃣ Deployment Status
+## 🔧 Tech Stack
 
-### ⚠️ NOT LIVE IN PRODUCTION YET
-
-This is a development/self-hosted solution. Choose an option:
-
-**Option 1: Self-Hosted** (Recommended for teams)
-- Deploy to your own server
-- Full data control
-- Private knowledge base
-
-**Option 2: Docker**
-```bash
-docker-compose up
-```
-
-**Option 3: Cloud Services**
-- Vercel (frontend)
-- Railway/Render (backend)
-
-**Option 4: Use Alternatives**
-- ChatGPT, Claude.ai, Perplexity AI
+| Layer | Technology | Purpose |
+|-------|-----------|---------|
+| **Frontend** | React 18, Vite 5.4.21 | SPA with streaming UI |
+| **Backend** | Node.js, Express | REST + SSE endpoints |
+| **LLM** | Groq (llama-3.3-70b) | Primary inference; 8b-instant for classify/reformulate |
+| **Embeddings** | Ollama (nomic-embed-text) | 768-dim vector embeddings |
+| **Vector Search** | In-memory cosine similarity | Real-time semantic ranking |
+| **Storage** | JSON files + file-based cache | Knowledge base + conversation logs |
+| **State** | localStorage (client), SSE (server-sent) | Conversation persistence |
 
 ---
 
-## 8️⃣ Testing Instructions
+## 📊 Data Flow: End-to-End
 
-### Clone & Test
+### 1. **Document Ingestion Pipeline**
 
-```bash
-# 1. Clone repo
-git clone https://github.com/yourusername/claude-support-bot.git
-cd claude-support-bot
-
-# 2. Install everything
-npm install
-
-# 3. Configure .env with your API keys
-
-# 4. Start Ollama (terminal 1)
-ollama serve
-
-# 5. Start app (terminal 2)
-npm run dev
-
-# 6. Test in browser
-# Go to http://localhost:5173
-# Login: publisher@gmail.com / User123
-
-# 7. Test Features
-- Send message → AI responds
-- Upload file (PDF/image)
-- Create new conversation
-- Switch between chats
-- Delete conversation
-- Toggle dark mode
+```
+User uploads PDF/DOCX
+      │
+      ▼
+[Client] analyzeDoc()
+      │
+      ▼ (chunking service)
+Extract passages
+(sliding window, 150 overlap)
+      │
+      ▼
+[Server] /api/documents/analyze
+      │
+      ├─ Store metadata
+      └─ Generate embeddings (Ollama)
+           │
+           ▼
+      Index in JSON KB
+      (source_type=document, customer=ASM)
 ```
 
-### Testing Checklist
+**Key Details:**
+- Chunking: Sentence-aware sliding window with 150-token overlap
+- Embedding: Async batch via Ollama nomic-embed-text (768-dim)
+- Tagging: Every passage tagged with `customer` field (multi-tenant scope)
+- Deduplication: Source-file + chunk index prevents re-indexing
 
-- [ ] Login/Signup works
-- [ ] Chat responds in real-time
-- [ ] Loading animation shows
-- [ ] Messages save to history
-- [ ] Conversations persist
-- [ ] File upload works
-- [ ] Dark mode toggles
-- [ ] Logo visible in loading state
-- [ ] Colors match DocFlow brand
+---
 
-### Commands
+### 2. **Chat Query Resolution Flow**
 
-```bash
-npm run dev           # Start dev servers
-npm run dev:server    # Backend only
-npm run dev:client    # Frontend only
-cd server && node src/db/seedUser.js  # Create test user
-npm run build         # Production build
-npm run preview       # Preview build
+```
+User message: "In ASM, how do I fix JATS validation?"
+      │
+      ▼
+[RAG Pipeline] - chat endpoint (SSE streaming)
+      │
+      ├─ detectCustomer("ASM") → customerFilter = "ASM"
+      │
+      ├─ intentClassify()
+      │  └─ SOCIAL vs TASK (reject off-topic)
+      │
+      ├─ isDomainRelated() 
+      │  └─ Groq classify: is this e-publishing? (fail-open when LLM down)
+      │
+      ├─ Dual-query search
+      │  ├─ Raw: "JATS validation" 
+      │  └─ Reformulated: Groq 8b expands intent
+      │
+      ├─ searchSimilar(query, topK=5, customerFilter="ASM")
+      │  └─ Filter: source_type=document AND customer=ASM
+      │     Rank by cosine similarity + helpfulness boost
+      │
+      ├─ Score gating
+      │  ├─ If customer-scoped: gate=0.62
+      │  └─ If no customer: gate=0.50 (loose, allow common solutions)
+      │
+      ├─ Retrieve full document context
+      │  └─ getDocumentPassages(source, customer="ASM")
+      │     Expand to surrounding passages
+      │
+      ├─ Synthesis (Groq 70b streaming)
+      │  ├─ SYSTEM_PROMPT: e-publishing expert, support tone
+      │  ├─ DOC_SYNTHESIS_PROMPT: ground in passages
+      │  └─ Fallback injection: "if docs don't answer → say not in ASM docs → route to support"
+      │
+      └─ [safeStream] wrapper
+         ├─ If Groq available: stream response
+         └─ If Groq 429/down: yield SERVICE_BUSY_RESPONSE (no hallucination)
+
+Response streamed via SSE → Client UI
 ```
 
-### Troubleshooting
+**Confidence Gating Logic:**
+- **Customer-scoped (ASM named):** Require 62% similarity → if below, respond "not in ASM docs" + support route
+- **No customer named:** Require 50% similarity → if below, generate brief general e-publishing guidance + support route
+- **Below threshold fallback:** Never hallucinate; always offer escalation
 
-| Problem | Solution |
-|---------|----------|
-| Port 3001 in use | Kill the process using it |
-| Ollama won't connect | Run `ollama serve` in terminal |
-| Google OAuth fails | Add Client ID to .env files |
-| Messages not saving | Check localStorage for auth_token |
+---
+
+### 3. **Customer Scoping & Multi-Tenancy**
+
+```
+Import Document Form
+      │
+      ├─ User selects: "ASM" (or types "NewCustomer")
+      │
+      ▼
+All passages tagged: { customer: "ASM", source_type: "document", ... }
+      │
+      ▼
+[Stored in JSON KB]
+      │
+      ▼
+Chat Query: "In ASM, how do I..."
+      │
+      ├─ detectCustomer("ASM") ✓
+      │
+      ▼
+searchSimilar(query, customerFilter="ASM")
+      │
+      └─ Pool = [entries where source_type=document AND customer=ASM]
+         (exclude entries, exclude other customers)
+```
+
+**Multi-Tenant Isolation:**
+- Same filename across customers (e.g., `guide.pdf` in both ASM and BMJ) stays separate via `customer` + `source_files` composite key
+- Query without customer name searches ALL (entries + all documents), applies 50% gate
+- Dynamic customer addition: Type in import form → added to dropdown for session
+
+---
+
+## 🔌 API Endpoints
+
+### Chat
+- **POST** `/api/chat` — Stream chat response (SSE)
+  - **Params:** `message`, `conversationId` (optional), `history`
+  - **Returns:** `text/event-stream` with chunked tokens
+  - **Resilience:** safeStream wrapper catches Groq errors → SERVICE_BUSY_RESPONSE
+
+### Knowledge Base
+- **POST** `/api/knowledge/bulk` — Ingest multiple passages
+  - **Body:** `[{ title, solution, customer, source_type, ... }]`
+  - **Reindex:** Auto-embed via Ollama
+  
+- **GET** `/api/knowledge/entries` — List all entries/documents
+  - **Filter:** `type=entry|document`, `customer=ASM`
+  
+- **POST** `/api/documents/analyze` — Analyze uploaded file
+  - **Body:** `FormData { file, customer }`
+  - **Returns:** `{ entries, documentMetadata }`
+
+### Document Management
+- **GET** `/api/documents` — List all imported documents grouped by customer
+  - **Returns:** `{ ASM: [...], BMJ: [...], ... }`
+  
+- **DELETE** `/api/documents/:source/:customer` — Remove document passages
+  - **Scope:** Only deletes passages matching `source` + `customer`
+
+### Health
+- **GET** `/api/health` — LLM + embedding service status
+  - **Returns:** `{ groq: "ok"|"error", ollama: "ok"|"error" }`
+
+---
+
+## 🧠 Vector Search Implementation
+
+### Embedding & Indexing
+```javascript
+// buildEmbedText(entry)
+return [title, aliases, error_description, solution].join('\n')
+  ↓ (Ollama nomic-embed-text)
+[768-dimensional dense vector]
+  ↓
+Stored in KB[i].embedding
+```
+
+### Search: Cosine Similarity + Ranking
+```javascript
+cosineSimilarity(queryVec, docVec) = 
+  dot(q, d) / (norm(q) * norm(d))
+
+score = base_similarity * (1 + min(helpfulness, 15) * 0.02)
+  // Boost entries with user thumbs-up
+```
+
+### Filtering Pipeline
+```
+pool = KB entries
+  ├─ Remove entries without embeddings
+  ├─ Filter by category (if categoryFilter set)
+  ├─ Filter by customer (if customerFilter set)
+  │  └─ source_type=document AND customer=customerFilter
+  └─ Rank by cosine similarity
+      └─ Return topK (default 5) where score > 0.25
+```
+
+---
+
+## 🛡️ LLM Resilience & Fallback Strategy
+
+### Groq Service (Primary)
+- **Models:**
+  - Fast: `llama-3.1-8b-instant` (classify, reformulate)
+  - Smart: `llama-3.3-70b-versatile` (synthesis, reasoning)
+- **Failure Handling:**
+  - `groqOnce()` returns `""` on error (internal callers degrade gracefully)
+  - `groqStream()` throws on error (pipeline catches via safeStream)
+
+### Safe Fallback Strategy
+```javascript
+safeStream(systemPrompt, userMessage, history) {
+  try {
+    return groqStream(...)
+  } catch (err) {
+    if (err.code === 'rate_limit_exceeded') {
+      // Don't fallback to weak local model
+      // Risk of hallucination > value of weak answer
+      yield SERVICE_BUSY_RESPONSE
+    }
+  }
+}
+
+SERVICE_BUSY_RESPONSE = 
+  "I'm having trouble reaching our assistant right now. 
+   Please contact our support team for immediate help."
+```
+
+**Rationale:** 
+- Weak local model (Ollama llama3.2:3b) hallucinated MOBI/XML instructions when Groq was rate-limited
+- User feedback: "Safe message + support" > "risky local answer"
+- Result: No hallucination fallback; fail gracefully instead
+
+### Domain Gating (Fail-Open)
+```javascript
+isDomainRelated(text) {
+  const relevant = groqOnce(DOMAIN_PROMPT, text)
+  // If Groq fails (returns ''), assume relevant (fail-open)
+  return relevant !== 'no'
+}
+```
+
+---
+
+## 🎯 Intent Classification & De-Escalation
+
+### Intent Types
+- **SOCIAL:** Greetings, appreciation, off-topic ("Hello", "Thank you", "How are you?")
+- **TASK:** Support requests, troubleshooting, how-tos
+
+### Processing
+```javascript
+isSocialMessage(text) {
+  // Regex: common greetings
+  if (/^(hi|hello|hey|good\s+(morning|night)|thank)/i.test(text))
+    return true
+  
+  // If ambiguous (e.g., "Good."), use Groq 70b classifier
+  if (text.length < 10 || text.includes('.')) {
+    const classification = groqOnce(CLASSIFY_PROMPT, text, { smart: true })
+    return classification === 'social'
+  }
+  return false
+}
+```
+
+### Angry/Frustrated User Handling
+```
+User tone detected (keywords: frustrated, angry, error, broken)
+      │
+      ▼
+Escalate intent to TASK (not rejected)
+      │
+      ▼
+DE_ESCALATION_PROMPT: "calm, kind, understanding tone"
+      │
+      ▼
+Always route to "our support team" (not robotic)
+```
 
 ---
 
@@ -250,78 +336,125 @@ npm run preview       # Preview build
 
 ```
 claude-support-bot/
-├── server/
+├── client/                          # React SPA
 │   ├── src/
-│   │   ├── index.js (main server)
-│   │   ├── db/ (data files)
-│   │   ├── routes/ (API endpoints)
-│   │   ├── middleware/ (auth)
-│   │   └── services/ (AI integrations)
+│   │   ├── components/
+│   │   │   ├── chat/ChatInterface.jsx
+│   │   │   ├── admin/
+│   │   │   │   ├── DocImportForm.jsx      # Multi-customer doc upload
+│   │   │   │   ├── DocumentsView.jsx      # Grouped by customer
+│   │   │   │   └── KBManager.jsx          # Add Entry / Search
+│   │   ├── services/
+│   │   │   └── api.js                     # Client-side API calls
+│   │   └── App.jsx
+│   ├── index.html
+│   └── vite.config.js
 │
-├── client/
+├── server/                          # Node.js backend
 │   ├── src/
-│   │   ├── pages/ (Login, Chat)
-│   │   ├── components/ (UI)
-│   │   ├── services/ (API calls)
-│   │   └── index.css (styling)
+│   │   ├── index.js                 # Express server entry
+│   │   ├── routes/
+│   │   │   ├── chat.js              # POST /api/chat (SSE)
+│   │   │   ├── knowledge.js         # KB CRUD
+│   │   │   ├── documents.js         # Doc import/analyze
+│   │   │   ├── health.js            # Health check
+│   │   │   └── conversations.js     # Chat history
+│   │   └── services/
+│   │       ├── ragPipeline.js       # Core orchestrator
+│   │       ├── vectorStore.js       # Search + filtering
+│   │       ├── groqService.js       # Groq SDK wrapper
+│   │       ├── ollamaService.js     # Embeddings
+│   │       ├── documentChunker.js   # PDF/DOCX → passages
+│   │       └── conversationStore.js # Persistence
+│   ├── data/
+│   │   ├── kb.json                  # Knowledge base (entries + docs)
+│   │   └── conversations.json       # Chat history by user
+│   └── nodemon.json                 # Watch config (ignore data/ writes)
 │
-├── data/ (created at runtime)
-│   ├── users.json
-│   ├── conversations.json
-│   ├── kb.json
-│   └── feedback.json
-│
-├── .env (your config)
-├── README.md
-└── GOOGLE_OAUTH_SETUP.md
+├── .env                             # LLM API keys
+├── package.json
+└── README.md (this file)
 ```
 
 ---
 
-## 🔐 Security
+## 🚀 Deployment & Configuration
 
-✅ Implemented:
-- Bcryptjs password hashing
-- JWT tokens (30-day expiration)
-- Server-side OAuth verification
-- CORS protection
-- XSS prevention
-- Input validation
+### Environment Variables
+```bash
+# Groq
+GROQ_API_KEY=gsk_...
+GROQ_FAST_MODEL=llama-3.1-8b-instant
+GROQ_SMART_MODEL=llama-3.3-70b-versatile
 
-⚠️ Before Production:
-- Change admin password
-- Use strong JWT secret
-- Enable HTTPS
-- Don't commit .env files
-- Validate all inputs
+# Ollama (local embeddings)
+OLLAMA_HOST=http://localhost:11434
+OLLAMA_MODEL=nomic-embed-text
 
----
+# Server
+PORT=3001
+CLIENT_URL=http://localhost:5173
+ADMIN_PASSWORD=admin123
+```
 
-## 📞 Help
+### Local Development
+```bash
+# Terminal 1: Start Ollama
+ollama run nomic-embed-text
 
-- Check browser console (F12) for errors
-- Read terminal logs
-- See GOOGLE_OAUTH_SETUP.md for OAuth help
-- Review DEPLOYMENT.md for production
+# Terminal 2: Backend
+cd server && npm install && npm start
 
----
+# Terminal 3: Frontend
+cd client && npm install && npm run dev
+```
 
-## 📝 License
-
-Internal use and educational purposes.
-
----
-
-## 🙏 Credits
-
-- **Frontend:** React, Vite, TailwindCSS
-- **Backend:** Node.js, Express
-- **AI:** Groq, Ollama, Claude API
-- **Icons:** Lucide React
+### Production Considerations
+- **Scaling:** Move JSON KB to PostgreSQL with pgvector for large corpora
+- **Embeddings:** Host Ollama on dedicated GPU VM for speed
+- **Groq rate limits:** Implement token budgeting; alert when approaching daily cap
+- **Monitoring:** Track LLM latency, hallucination rate, customer satisfaction
+- **Fallback LLM:** Evaluate DeepSeek / Claude API as secondary provider
 
 ---
 
-**Last Updated:** 2026-06-13
-**Status:** ✅ Development Ready | ⚠️ Not Production Deployed
+## 🔍 Key Features
 
-Happy coding! 🚀
+✅ **Semantic Search:** Dual-query (raw + reformulated) with cosine similarity  
+✅ **Customer Scoping:** Documents partitioned by customer; queries auto-scope  
+✅ **Confidence Gating:** 50–62% threshold depending on customer context  
+✅ **Safe Fallback:** SERVICE_BUSY_RESPONSE instead of hallucinated answers  
+✅ **Conversation Persistence:** 2-day retention, then rolling 24-hour expiry  
+✅ **Streaming UI:** SSE for real-time token output  
+✅ **Multi-intent:** Social/task distinction with LLM classifier  
+✅ **De-escalation:** Calm tone for frustrated users  
+✅ **Helpfulness Ranking:** Thumbs-up boost for popular answers  
+✅ **Alias/Keyword Matching:** Custom search terms in KB entries  
+
+---
+
+## 📈 Performance & Limits
+
+| Metric | Value | Notes |
+|--------|-------|-------|
+| **Embeddings Latency** | ~200ms | nomic-embed-text (CPU) |
+| **Search Latency** | ~50ms | In-memory cosine similarity |
+| **Groq Inference** | 3–8s | 70b-versatile; varies by response length |
+| **SSE Streaming** | <1s first token | Real-time token delivery |
+| **Daily Token Limit** | 100k | Groq free tier; cumulative 8b + 70b |
+| **KB Size** | Tested to 500+ passages | JSON file; recommend DB at >10k |
+
+---
+
+## 📝 License & Contributing
+
+Internal project. For modifications:
+1. Test full RAG pipeline (intent → search → synthesis)
+2. Verify customer scoping with multi-tenant queries
+3. Check LLM resilience (simulate Groq failures)
+4. Update this README for architectural changes
+
+---
+
+**Last Updated:** June 2026  
+**Project:** DocFlow — Publishing AI Support Bot

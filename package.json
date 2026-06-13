@@ -1,0 +1,21 @@
+{
+  "name": "docflow",
+  "version": "1.0.0",
+  "description": "DocFlow — RAG-powered AI support bot for publishing workflows",
+  "scripts": {
+    "start": "powershell -ExecutionPolicy Bypass -File manage.ps1 start",
+    "stop": "powershell -ExecutionPolicy Bypass -File manage.ps1 stop",
+    "restart": "powershell -ExecutionPolicy Bypass -File manage.ps1 restart",
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm run dev",
+    "install:all": "npm install && cd server && npm install && cd ../client && npm install",
+    "tunnel": "node tunnel.js"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "ngrok": "^5.0.0-beta.2"
+  }
+}

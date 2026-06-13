@@ -1,0 +1,144 @@
+
+> docflow@1.0.0 dev
+> concurrently "npm run dev:server" "npm run dev:client"
+
+(node:712) [DEP0060] DeprecationWarning: The `util._extend` API is deprecated. Please use Object.assign() instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[1] 
+[1] > docflow@1.0.0 dev:client
+[1] > cd client && npm run dev
+[1] 
+[0] 
+[0] > docflow@1.0.0 dev:server
+[0] > cd server && npm run dev
+[0] 
+[1] 
+[1] > docflow-client@1.0.0 dev
+[1] > vite --host
+[1] 
+[0] 
+[0] > docflow-server@1.0.0 dev
+[0] > nodemon src/index.js
+[0] 
+[0] [33m[nodemon] 3.1.14[39m
+[0] [33m[nodemon] to restart at any time, enter `rs`[39m
+[0] [33m[nodemon] watching path(s): src\**\*[39m
+[0] [33m[nodemon] watching extensions: js,json[39m
+[0] [32m[nodemon] starting `node src/index.js`[39m
+[1] Port 5173 is in use, trying another one...
+[1] Port 5174 is in use, trying another one...
+[1] Port 5175 is in use, trying another one...
+[1] Port 5176 is in use, trying another one...
+[1] Port 5177 is in use, trying another one...
+[1] 
+[1]   [32m[1mVITE[22m v5.4.21[39m  [2mready in [0m[1m1036[22m[2m[0m ms[22m
+[1] 
+[1]   [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5178[22m/[39m
+[1]   [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.0.106:[1m5178[22m/[39m
+[0]   Database initialized (JSON store, in-memory cached)
+[0] node:events:497
+[0]       throw er; // Unhandled 'error' event
+[0]       ^
+[0] 
+[0] Error: listen EADDRINUSE: address already in use :::3001
+[0]     at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+[0]     at listenInCluster (node:net:1997:12)
+[0]     at Server.listen (node:net:2102:7)
+[0]     at Function.listen (C:\Users\Alexraj\Desktop\Claude-support-bot\server\node_modules\express\lib\application.js:635:24)
+[0]     at Object.<anonymous> (C:\Users\Alexraj\Desktop\Claude-support-bot\server\src\index.js:50:5)
+[0]     at Module._compile (node:internal/modules/cjs/loader:1706:14)
+[0]     at Object..js (node:internal/modules/cjs/loader:1839:10)
+[0]     at Module.load (node:internal/modules/cjs/loader:1441:32)
+[0]     at Function._load (node:internal/modules/cjs/loader:1263:12)
+[0]     at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+[0]     at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+[0]     at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5)
+[0]     at node:internal/main/run_main_module:36:49
+[0] Emitted 'error' event on Server instance at:
+[0]     at emitErrorNT (node:net:1976:8)
+[0]     at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+[0]   code: 'EADDRINUSE',
+[0]   errno: -4091,
+[0]   syscall: 'listen',
+[0]   address: '::',
+[0]   port: 3001
+[0] }
+[0] 
+[0] Node.js v22.21.1
+[0] [31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[0] [32m[nodemon] restarting due to changes...[39m
+[0] [32m[nodemon] starting `node src/index.js`[39m
+[0]   Database initialized (JSON store, in-memory cached)
+[0] node:events:497
+[0]       throw er; // Unhandled 'error' event
+[0]       ^
+[0] 
+[0] Error: listen EADDRINUSE: address already in use :::3001
+[0]     at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+[0]     at listenInCluster (node:net:1997:12)
+[0]     at Server.listen (node:net:2102:7)
+[0]     at Function.listen (C:\Users\Alexraj\Desktop\Claude-support-bot\server\node_modules\express\lib\application.js:635:24)
+[0]     at Object.<anonymous> (C:\Users\Alexraj\Desktop\Claude-support-bot\server\src\index.js:50:5)
+[0]     at Module._compile (node:internal/modules/cjs/loader:1706:14)
+[0]     at Object..js (node:internal/modules/cjs/loader:1839:10)
+[0]     at Module.load (node:internal/modules/cjs/loader:1441:32)
+[0]     at Function._load (node:internal/modules/cjs/loader:1263:12)
+[0]     at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+[0]     at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+[0]     at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5)
+[0]     at node:internal/main/run_main_module:36:49
+[0] Emitted 'error' event on Server instance at:
+[0]     at emitErrorNT (node:net:1976:8)
+[0]     at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+[0]   code: 'EADDRINUSE',
+[0]   errno: -4091,
+[0]   syscall: 'listen',
+[0]   address: '::',
+[0]   port: 3001
+[0] }
+[0] 
+[0] Node.js v22.21.1
+[0] [31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[0] [32m[nodemon] restarting due to changes...[39m
+[0] [32m[nodemon] starting `node src/index.js`[39m
+[0]   Database initialized (JSON store, in-memory cached)
+[0] node:events:497
+[0]       throw er; // Unhandled 'error' event
+[0]       ^
+[0] 
+[0] Error: listen EADDRINUSE: address already in use :::3001
+[0]     at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+[0]     at listenInCluster (node:net:1997:12)
+[0]     at Server.listen (node:net:2102:7)
+[0]     at Function.listen (C:\Users\Alexraj\Desktop\Claude-support-bot\server\node_modules\express\lib\application.js:635:24)
+[0]     at Object.<anonymous> (C:\Users\Alexraj\Desktop\Claude-support-bot\server\src\index.js:50:5)
+[0]     at Module._compile (node:internal/modules/cjs/loader:1706:14)
+[0]     at Object..js (node:internal/modules/cjs/loader:1839:10)
+[0]     at Module.load (node:internal/modules/cjs/loader:1441:32)
+[0]     at Function._load (node:internal/modules/cjs/loader:1263:12)
+[0]     at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+[0]     at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+[0]     at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5)
+[0]     at node:internal/main/run_main_module:36:49
+[0] Emitted 'error' event on Server instance at:
+[0]     at emitErrorNT (node:net:1976:8)
+[0]     at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+[0]   code: 'EADDRINUSE',
+[0]   errno: -4091,
+[0]   syscall: 'listen',
+[0]   address: '::',
+[0]   port: 3001
+[0] }
+[0] 
+[0] Node.js v22.21.1
+[0] [31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[1] [2m11:25:30 pm[22m [36m[1m[vite][22m[39m [32m.env.local changed, restarting server...[39m
+[1] [2m11:25:30 pm[22m [36m[1m[vite][22m[39m server restarted.
+[0] [32m[nodemon] restarting due to changes...[39m
+[0] [32m[nodemon] starting `node src/index.js`[39m
+[0]   Database initialized (JSON store, in-memory cached)
+[0] 
+[0]   Support Bot server running → http://localhost:3001
+[0] 
+[0] [DocFlow] Reformulated: "Define DTD error." → "DTD validation error in JATS XML"
+[0] [DocFlow] no_results: "DTD validation error in JATS XML"
