@@ -164,7 +164,7 @@ Response streamed via SSE → Client UI
 ```
 
 **Confidence Gating Logic:**
-- **Customer-scoped (ASM named):** Require 62% similarity → if below, respond "not in ASM docs" + support route
+- **Customer-scoped (customer named):** Require 62% similarity → if below, respond "not in Customer docs" + support route
 - **No customer named:** Require 50% similarity → if below, generate brief general e-publishing guidance + support route
 - **Below threshold fallback:** Never hallucinate; always offer escalation
 
@@ -224,7 +224,7 @@ searchSimilar(query, customerFilter="[customer]")
 
 ### Document Management
 - **GET** `/api/documents` — List all imported documents grouped by customer
-  - **Returns:** `{ ASM: [...], BMJ: [...], ... }`
+  - **Returns:** `{ customer1: [...], customer2: [...], ... }`
   
 - **DELETE** `/api/documents/:source/:customer` — Remove document passages
   - **Scope:** Only deletes passages matching `source` + `customer` pair
