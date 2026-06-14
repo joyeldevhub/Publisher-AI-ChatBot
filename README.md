@@ -107,7 +107,7 @@ Extract passages
            │
            ▼
       Index in JSON KB
-      (source_type=document, customer=ASM)
+      (source_type=document, customer=selected)
 ```
 
 **Key Details:**
@@ -122,12 +122,12 @@ Extract passages
 ### 2. **Chat Query Resolution Flow**
 
 ```
-User message: "In ASM, how do I fix JATS validation?"
+User message: "In [customer name], how do I fix an issue?"
       │
       ▼
 [RAG Pipeline] - chat endpoint (SSE streaming)
       │
-      ├─ detectCustomer("ASM") → customerFilter = "ASM"
+      ├─ detectCustomer("[customer name]") → customerFilter = "[customer name]"
       │
       ├─ intentClassify()
       │  └─ SOCIAL vs TASK (reject off-topic)
@@ -136,11 +136,11 @@ User message: "In ASM, how do I fix JATS validation?"
       │  └─ OpenRouter classify: is this e-publishing? (fail-open when LLM down)
       │
       ├─ Dual-query search
-      │  ├─ Raw: "JATS validation" 
+      │  ├─ Raw: "issue search query" 
       │  └─ Reformulated: OpenRouter expands intent
       │
-      ├─ searchSimilar(query, topK=5, customerFilter="ASM")
-      │  └─ Filter: source_type=document AND customer=ASM
+      ├─ searchSimilar(query, topK=5, customerFilter="[customer name]")
+      │  └─ Filter: source_type=document AND customer=[customer name]
       │     Rank by cosine similarity (or keyword match if vectors unavailable)
       │
       ├─ Score gating
@@ -148,13 +148,13 @@ User message: "In ASM, how do I fix JATS validation?"
       │  └─ If no customer: gate=0.50 (loose, allow common solutions)
       │
       ├─ Retrieve full document context
-      │  └─ getDocumentPassages(source, customer="ASM")
+      │  └─ getDocumentPassages(source, customer="[customer name]")
       │     Expand to surrounding passages
       │
       ├─ Synthesis (OpenRouter streaming, google/gemma-4-31b)
       │  ├─ SYSTEM_PROMPT: e-publishing expert, support tone
       │  ├─ DOC_SYNTHESIS_PROMPT: ground in passages
-      │  └─ Fallback injection: "if docs don't answer → say not in ASM docs → route to support"
+      │  └─ Fallback injection: "if docs don't answer → say not in customer docs → route to support"
       │
       └─ [safeStream] wrapper
          ├─ If OpenRouter available: stream response
@@ -175,28 +175,28 @@ Response streamed via SSE → Client UI
 ```
 Import Document Form
       │
-      ├─ User selects: "ASM" (or types "NewCustomer")
+      ├─ User selects or enters a customer name
       │
       ▼
-All passages tagged: { customer: "ASM", source_type: "document", ... }
+All passages tagged: { customer: "[customer]", source_type: "document", ... }
       │
       ▼
 [Stored in JSON KB]
       │
       ▼
-Chat Query: "In ASM, how do I..."
+Chat Query: "In [customer], how do I..."
       │
-      ├─ detectCustomer("ASM") ✓
+      ├─ detectCustomer("[customer]") ✓
       │
       ▼
-searchSimilar(query, customerFilter="ASM")
+searchSimilar(query, customerFilter="[customer]")
       │
-      └─ Pool = [entries where source_type=document AND customer=ASM]
+      └─ Pool = [entries where source_type=document AND customer=[customer]]
          (exclude entries, exclude other customers)
 ```
 
 **Multi-Tenant Isolation:**
-- Same filename across customers (e.g., `guide.pdf` in both ASM and BMJ) stays separate via `customer` + `source_files` composite key
+- Same filename across customers stays separate via `customer` + `source_files` composite key
 - Query without customer name searches ALL (entries + all documents), applies 50% gate
 - Dynamic customer addition: Type in import form → added to dropdown for session
 
@@ -216,7 +216,7 @@ searchSimilar(query, customerFilter="ASM")
   - **Reindex:** Auto-embed via Ollama
   
 - **GET** `/api/knowledge/entries` — List all entries/documents
-  - **Filter:** `type=entry|document`, `customer=ASM`
+  - **Filter:** `type=entry|document`, `customer=[customer]`
   
 - **POST** `/api/documents/analyze` — Analyze uploaded file
   - **Body:** `FormData { file, customer }`
@@ -227,7 +227,7 @@ searchSimilar(query, customerFilter="ASM")
   - **Returns:** `{ ASM: [...], BMJ: [...], ... }`
   
 - **DELETE** `/api/documents/:source/:customer` — Remove document passages
-  - **Scope:** Only deletes passages matching `source` + `customer`
+  - **Scope:** Only deletes passages matching `source` + `customer` pair
 
 ### Health
 - **GET** `/api/health` — LLM + embedding service status

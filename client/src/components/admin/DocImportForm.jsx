@@ -15,16 +15,7 @@ const CATEGORIES = [
 
 // Customers — documents are saved under the selected customer, and chat answers
 // can be scoped to a customer when the user names it.
-const CUSTOMERS = [
-  'American Society for Microbiology',
-  'British Medical Journal',
-  'Society of Economic Geologists',
-  'Royal Society',
-  'Professional Publishing League',
-  'eLife',
-  'Journal of Medical Internet Research',
-  'Society of Petroleum Engineers',
-];
+const CUSTOMERS = [];
 
 const CATEGORY_COLORS = {
   'LaTeX Setter':        'bg-indigo-50 text-indigo-600',
